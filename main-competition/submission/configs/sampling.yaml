@@ -1,0 +1,28 @@
+# Generation parameters, pulled into agent.yaml with !include.
+#
+# ASSUMED SCHEMA: the Overview says configs/sampling.yaml holds "generation
+# parameters" loaded via !include but never names the keys. These are the usual
+# sampling knob names. If the harness rejects unknown keys, the safe move is to
+# delete this file and the !include that references it -- sampling is optional
+# and the base model defaults will be used.
+#
+# Rationale for the values: this is a code-editing task judged on whether a
+# patch makes a test pass. A patch that is 95% right scores zero, same as one
+# that is 0% right. So bias hard toward the model's confident path: low
+# temperature, and a long stop sequence so a runaway generation cannot eat the
+# task's time budget.
+
+temperature: 0.15
+top_p: 0.9
+top_k: 40
+max_output_tokens: 4096
+
+# A patch is a diff; once the diff closes, nothing useful follows. Stopping on
+# the fence also stops the model from narrating after it has already answered.
+stop_sequences:
+  - "```"
+
+# Let the model finish a long file write without truncating mid-patch. The
+# per-task wall clock still bounds the task, so this cannot run away.
+presence_penalty: 0.0
+frequency_penalty: 0.0

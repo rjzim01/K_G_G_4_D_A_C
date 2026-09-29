@@ -1,0 +1,41 @@
+# Root agent for gemma-4-developer-agent.
+#
+# Schema: see ../SCHEMA-NOTES.md. Field names marked ASSUMED there are inferred
+# from Google's ADK Agent Config and have not been checked against the dataset's
+# sample_submission/agent.yaml. Read that file and reconcile before submitting.
+#
+# Model is pinned: the rules allow only gemma-4-31b-it-qat-w4a16-ct, for this
+# agent and for every sub-agent. There is no per-agent base-model override.
+
+name: coder
+model: gemma-4-31b-it-qat-w4a16-ct
+
+description: >-
+  Root SWE agent. Reads the task's problem statement, locates the defect,
+  drafts a minimal fix, and submits the patch. Delegates symbol/reference
+  search to the locator sub-agent and patch verification to the patcher.
+
+instruction: !include prompts/system.md
+
+tools:
+  # Harness-provided. Only these plus declared agent_tools are callable.
+  - run_command
+  - read_file
+  - edit_file
+  - write_file
+  - submit_patch
+  - get_status
+  # Released code-intelligence tools. In the downloadable ZIP these read
+  # per-task graph/embedding files that are absent, so they return empty. They
+  # are listed here and the policy for dealing with that is in the system
+  # prompt: probe once per task, then fall back. Drop them entirely if your
+  # run confirms they are dead -- that is strictly better than paying for them.
+  - get_code_neighbors
+  - get_code_subgraph
+  - search_similar_code
+
+sub_agents:
+  - agent_tool:
+      config: sub_agents/locator.yaml
+  - agent_tool:
+      config: sub_agents/patcher.yaml

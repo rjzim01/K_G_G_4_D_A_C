@@ -1,0 +1,27 @@
+# Per-task time limits. The rules say these are optional; the 12-hour budget is
+# shared across all 129 tasks, so leaving it unbounded means one hard task can
+# eat the whole budget and starve the rest.
+#
+# 12 h = 43,200 s. 129 tasks. At 300 s each that is 38,700 s -- 4,500 s of slack
+# for the slowest tasks to overrun without starving the rest.
+#
+# ASSUMED SCHEMA: the field names here are inferred. The Overview only says
+# "you may set per-task time limits in eval_config.yaml" and never shows the
+# shape. Confirm against HARNESS_README.md.
+
+defaults:
+  per_task_seconds: 300
+  # A task that has burned this much without a submitted patch is abandoned and
+  # scored as a failure. Banked time is worth more than a stalled task: the
+  # metric is the percentage of tasks that pass, so one more finished task
+  # beats one more attempt at a hard one.
+  abandon_after_seconds: 240
+
+overrides:
+  # fastapi and httpx carry the heaviest async machinery; they are where an
+  # agent is most likely to get stuck reading.
+  fastapi_*: 360
+  httpx_*: 360
+  # rich and requests are usually a small, local fix.
+  rich_*: 240
+  requests_*: 240
